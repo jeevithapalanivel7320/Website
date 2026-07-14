@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en" class="lenis">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Premium Web Experience | Awwwards Inspired</title>
+    <meta name="description" content="Next-generation frontend experience with GSAP, ScrollTrigger, and Lenis.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Libraries -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/split-type"></script>
+
+    <style>
+        /* =========================================
+           1. CSS VARIABLES & RESET
+        ========================================= */
+        :root {
+            --bg-color: #050505;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent-1: #6a11cb;
+            --accent-2: #2575fc;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --font-sans: 'Inter', sans-serif;
+            --font-display: 'Space Grotesk', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; /* Hide default cursor for custom cursor */
+        }
+
+        html.lenis { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto !important; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
+        .lenis.lenis-scrolling iframe { pointer-events: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.8s ease;
+        }
+
+        /* =========================================
+           2. TYPOGRAPHY & UTILITIES
+        ========================================= */
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #fff 0%, #777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        /* =========================================
+           3. UI COMPONENTS (Loader, Cursor, Nav)
+        ========================================= */
+        /* Loader */
+        .loader {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loader-text {
+            font-family: var(--font-display);
+            font-size: 4vw;
+            overflow: hidden;
+        }
+        .loader-progress {
+            width: 200px;
+            height: 2px;
+            background: var(--glass-border);
+            margin-top: 20px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .loader-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--text-main);
+        }
+
+        /* Custom Cursor */
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0; left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 10000;
+            pointer-events: none;
+            mix-blend-mode: difference;
+        }
+        .cursor-dot {
+            width: 8px; height: 8px;
+            background-color: white;
+        }
+        .cursor-outline {
+            width: 40px; height: 40px;
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        /* Scroll Progress */
+        .scroll-progress {
+            position: fixed;
+            top: 0; left: 0;
+            width: 0%; height: 3px;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+            z-index: 9998;
+        }
+
+        /* Sticky Nav */
+        nav {
+            position: fixed;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            width: 90%; max-width: 1200px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 100px;
+        }
+        .nav-logo { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: var(--text-main); text-decoration: none; font-size: 0.9rem; }
+        
+        .btn-magnetic {
+            padding: 12px 24px;
+            background: var(--text-main);
+            color: var(--bg-color);
+            border: none;
+            border-radius: 100px;
+            font-weight: 500;
+            display: inline-block;
+            position: relative;
+        }
+
+        /* =========================================
+           4. SECTIONS & LAYOUT
+        ========================================= */
+        #main-wrapper {
+            background-color: var(--bg-color);
+            position: relative;
+            z-index: 2; /* Keeps above footer */
+            margin-bottom: 100vh; /* For footer reveal */
+        }
+
+        /* Aurora Background */
+        .aurora-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .blob {
+            position: absolute;
+            filter: blur(100px);
+            opacity: 0.6;
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out alternate;
+            will-change: transform;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--accent-1); }
+        .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: var(--accent-2); animation-delay: -5s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vw, 10vh) scale(1.2); }
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 8rem);
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+        }
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+        .floating-obj {
+            position: absolute;
+            width: 100px; height: 100px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .obj-1 { top: 20%; left: 15%; }
+        .obj-2 { bottom: 20%; right: 15%; border-radius: 50%; }
+
+        /* Infinite Marquee */
+        .marquee-section {
+            padding: 50px 0;
+            overflow: hidden;
+            background: var(--bg-color);
+            border-top: 1px solid var(--glass-border);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .marquee-container {
+            display: flex;
+            width: fit-content;
+            animation: marquee 20s linear infinite;
+        }
+        .marquee-text {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            white-space: nowrap;
+            padding: 0 2vw;
+            -webkit-text-stroke: 1px var(--text-muted);
+            color: transparent;
+            text-transform: uppercase;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Features / Cards Section */
+        .features {
+            padding: 150px 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .section-header {
+            margin-bottom: 80px;
+            font-size: 3rem;
+            text-align: center;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .card {
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: border-color 0.3s;
+        }
+        .card::before {
+            content: "";
+            position: absolute;
+            top: var(--mouse-y, 0);
+            left: var(--mouse-x, 0);
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .card:hover::before { opacity: 1; }
+        .card h3 { font-size: 1.5rem; margin-bottom: 15px; transform: translateZ(30px); }
+        .card p { color: var(--text-muted); line-height: 1.6; transform: translateZ(20px); }
+
+        /* Horizontal Scroll Section */
+        .horizontal-section {
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .horizontal-container {
+            display: flex;
+            width: 300vw; /* 3 panels */
+            height: 100vh;
+        }
+        .h-panel {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            font-family: var(--font-display);
+            padding: 0 5vw;
+        }
+        .h-panel img {
+            width: 50%;
+            height: 60vh;
+            object-fit: cover;
+            border-radius: 20px;
+            clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%); /* For mask reveal */
+        }
+        .h-panel .text-content {
+            width: 50%;
+            padding: 0 50px;
+        }
+
+        /* Card Stacking Section */
+        .card-stack-section {
+            padding: 100px 5%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stack-card {
+            width: 100%;
+            max-width: 900px;
+            height: 60vh;
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: sticky;
+            top: 20vh;
+        }
+        .stack-1 { background: #111; z-index: 1; }
+        .stack-2 { background: #1a1a1a; z-index: 2; top: 22vh; }
+        .stack-3 { background: #222; z-index: 3; top: 24vh; }
+
+        /* Stats & SVG Line Section */
+        .stats {
+            padding: 150px 5%;
+            text-align: center;
+            position: relative;
+        }
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            gap: 100px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+        .stat-item h4 {
+            font-size: 5rem;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .svg-container {
+            margin: 100px auto 0;
+            width: 2px;
+            height: 200px;
+            background: var(--glass-border);
+            position: relative;
+        }
+        .svg-line {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            background: var(--text-main);
+            height: 0%;
+        }
+
+        /* Footer Reveal */
+        footer {
+            position: fixed;
+            bottom: 0; left: 0;
+            width: 100%; height: 100vh;
+            background: #000;
+            z-index: 1; /* Below main wrapper */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .footer-content h2 {
+            font-size: clamp(4rem, 10vw, 12rem);
+            line-height: 0.9;
+            margin-bottom: 30px;
+        }
+        .particles {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            nav { width: 95%; padding: 10px 20px; }
+            .nav-links { display: none; }
+            .h-panel { flex-direction: column; text-align: center; }
+            .h-panel img, .h-panel .text-content { width: 100%; }
+            .h-panel img { height: 40vh; margin-bottom: 20px; }
+            .cursor-dot, .cursor-outline { display: none; } /* Disable custom cursor on mobile */
+            * { cursor: auto; }
+            .stats-grid { gap: 40px; }
+            #main-wrapper { margin-bottom: 80vh; }
+            footer { height: 80vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress" id="scroll-progress"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
+
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="loader-text">
+            <span class="text-gradient">LOADING</span>
+        </div>
+        <div class="loader-progress">
+            <div class="loader-bar" id="loader-bar"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass nav-element">
+        <div class="nav-logo">AURA.</div>
+        <div class="nav-links">
+            <a href="#work" class="hover-target">Work</a>
+            <a href="#services" class="hover-target">Services</a>
+            <a href="#about" class="hover-target">About</a>
+        </div>
+        <button class="btn-magnetic hover-target" data-magnetic>Get Started</button>
+    </nav>
+
+    <!-- Main Content Wrapper (For Footer Reveal) -->
+    <div id="main-wrapper">
+        
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="aurora-bg">
+                <div class="blob blob-1"></div>
+                <div class="blob blob-2"></div>
+            </div>
+            
+            <div class="floating-obj obj-1" data-speed="0.5"></div>
+            <div class="floating-obj obj-2" data-speed="-0.5"></div>
+
+            <h1 id="hero-title">SHAPING THE<br>DIGITAL FUTURE</h1>
+            <p class="hero-desc">An immersive, high-performance web experience crafted with precision, motion, and modern aesthetics.</p>
+            
+            <button class="btn-magnetic hover-target hero-cta" data-magnetic style="padding: 16px 32px; font-size: 1.1rem;">
+                Explore Experience
+            </button>
+        </header>
+
+        <!-- Infinite Marquee Section -->
+        <section class="marquee-section">
+            <div class="marquee-container">
+                <div class="marquee-text">INNOVATION BEYOND LIMITS • CREATIVE DEVELOPMENT • PREMIUM UI/UX • </div>
+                <div class="marquee-text">INNOVATION BEYOND LIMITS • CREATIVE DEVELOPMENT • PREMIUM UI/UX • </div>
+            </div>
+        </section>
+
+        <!-- Features (Cards with Hover Interactions) -->
+        <section class="features" id="services">
+            <h2 class="section-header text-gradient fade-up">Our Expertise</h2>
+            <div class="grid-3">
+                <div class="card glass fade-up hover-target" data-tilt>
+                    <h3>Fluid Motion</h3>
+                    <p>Leveraging GSAP and custom math to create buttery smooth animations that run at a locked 60fps across all devices.</p>
+                </div>
+                <div class="card glass fade-up hover-target" data-tilt>
+                    <h3>Modern Design</h3>
+                    <p>Glassmorphism, aurora gradients, and minimalist typography inspired by the best platforms like Linear and Vercel.</p>
+                </div>
+                <div class="card glass fade-up hover-target" data-tilt>
+                    <h3>Next-Gen Code</h3>
+                    <p>Built with vanilla JavaScript, modern CSS features, and highly optimized rendering pathways for instant loading.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Horizontal Scrolling Section -->
+        <section class="horizontal-section" id="work">
+            <div class="horizontal-container" id="horizontal-container">
+                <div class="h-panel">
+                    <div class="text-content">
+                        <h2 class="text-gradient">Dynamic Masking</h2>
+                        <p style="font-size: 1.2rem; margin-top: 20px; color: var(--text-muted);">Scroll-triggered image reveals that captivate.</p>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop" class="reveal-img" alt="Abstract Art">
+                </div>
+                <div class="h-panel">
+                    <div class="text-content">
+                        <h2 class="text-gradient">Parallax Magic</h2>
+                        <p style="font-size: 1.2rem; margin-top: 20px; color: var(--text-muted);">Depth perception created through varied scroll speeds.</p>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop" class="reveal-img" alt="Abstract Art 2">
+                </div>
+                <div class="h-panel">
+                    <div class="text-content">
+                        <h2 class="text-gradient">Endless Scale</h2>
+                        <p style="font-size: 1.2rem; margin-top: 20px; color: var(--text-muted);">Designed to adapt seamlessly to any resolution.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Card Stacking Section -->
+        <section class="card-stack-section" id="about">
+            <h2 class="section-header text-gradient fade-up" style="margin-bottom: 40px;">Stacked Perspectives</h2>
+            <div class="stack-card glass stack-1">Sticky Card 01</div>
+            <div class="stack-card glass stack-2">Sticky Card 02</div>
+            <div class="stack-card glass stack-3">Sticky Card 03</div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats" id="stats-section">
+            <h2 class="section-header fade-up">By The Numbers</h2>
+            <div class="stats-grid">
+                <div class="stat-item fade-up">
+                    <h4 class="counter" data-target="99">0</h4>
+                    <p>Performance Score</p>
+                </div>
+                <div class="stat-item fade-up">
+                    <h4 class="counter" data-target="60">0</h4>
+                    <p>Frames Per Second</p>
+                </div>
+                <div class="stat-item fade-up">
+                    <h4 class="counter" data-target="100">0</h4>
+                    <p>Accessibility Score</p>
+                </div>
+            </div>
+            <div class="svg-container">
+                <div class="svg-line" id="draw-line"></div>
+            </div>
+        </section>
+
+    </div> <!-- End Main Wrapper -->
+
+    <!-- Footer Reveal -->
+    <footer>
+        <div class="particles" id="particles"></div>
+        <div class="footer-content">
+            <h2 class="text-gradient">LET'S TALK.</h2>
+            <a href="#" class="btn-magnetic hover-target glass" data-magnetic style="padding: 20px 40px; font-size: 1.2rem; color: white; text-decoration: none;">
+                hello@aura2026.com
+            </a>
+            <p style="margin-top: 50px; color: var(--text-muted);">© 2026 AURA Experience. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- =========================================
+         5. JAVASCRIPT LOGIC
+    ========================================= -->
+    <script>
+        // --- ARCHITECTURE SETUP ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        // --- LENIS SMOOTH SCROLLING ---
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // expoOut easing
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        // Integrate Lenis with GSAP ScrollTrigger
+        lenis.on('scroll', ScrollTrigger.update);
+
+        gsap.ticker.add((time) => {
+            lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+
+        // --- GLOBAL VARIABLES ---
+        const isMobile = window.innerWidth <= 768;
+
+        // --- CUSTOM CURSOR ---
+        function initCursor() {
+            if (isMobile) return;
+            const dot = document.getElementById('cursor-dot');
+            const outline = document.getElementById('cursor-outline');
+            const hoverTargets = document.querySelectorAll('.hover-target');
+
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            
+            // GSAP quickSet for performance
+            const setDotX = gsap.quickSetter(dot, "x", "px");
+            const setDotY = gsap.quickSetter(dot, "y", "px");
+            const setOutlineX = gsap.quickSetter(outline, "x", "px");
+            const setOutlineY = gsap.quickSetter(outline, "y", "px");
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                setDotX(mouseX);
+                setDotY(mouseY);
+                // Delayed follow for outline
+                gsap.to(outline, { x: mouseX, y: mouseY, duration: 0.5, ease: "power3.out" });
+            });
+
+            hoverTargets.forEach(target => {
+                target.addEventListener('mouseenter', () => {
+                    gsap.to(outline, { width: 60, height: 60, backgroundColor: 'rgba(255,255,255,0.1)', duration: 0.3 });
+                });
+                target.addEventListener('mouseleave', () => {
+                    gsap.to(outline, { width: 40, height: 40, backgroundColor: 'transparent', duration: 0.3 });
+                });
+            });
+        }
+
+        // --- MAGNETIC BUTTONS ---
+        function initMagnetic() {
+            if (isMobile) return;
+            const magnets = document.querySelectorAll('[data-magnetic]');
+            
+            magnets.forEach(magnet => {
+                magnet.addEventListener('mousemove', (e) => {
+                    const rect = magnet.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    
+                    // Move button
+                    gsap.to(magnet, { x: x * 0.4, y: y * 0.4, duration: 0.5, ease: "power2.out" });
+                });
+
+                magnet.addEventListener('mouseleave', () => {
+                    // Reset position
+                    gsap.to(magnet, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+                });
+            });
+        }
+
+        // --- CARD HOVER TILT & GLOW ---
+        function initCards() {
+            if (isMobile) return;
+            const cards = document.querySelectorAll('[data-tilt]');
+            
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    // Glow effect variables
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+
+                    // 3D Tilt calculation
+                    const xPct = (x / rect.width) - 0.5;
+                    const yPct = (y / rect.height) - 0.5;
+
+                    gsap.to(card, {
+                        rotationY: xPct * 15,
+                        rotationX: -yPct * 15,
+                        transformPerspective: 1000,
+                        ease: "power2.out",
+                        duration: 0.5
+                    });
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    gsap.to(card, {
+                        rotationY: 0,
+                        rotationX: 0,
+                        ease: "power2.out",
+                        duration: 0.5
+                    });
+                });
+            });
+        }
+
+        // --- SCROLL ANIMATIONS ---
+        function initScrollAnimations() {
+            // Scroll Progress Bar
+            gsap.to('#scroll-progress', {
+                width: '100%',
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: document.body,
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: 0.3
+                }
+            });
+
+            // Fade Up Elements
+            const fadeUps = document.querySelectorAll('.fade-up');
+            fadeUps.forEach(elem => {
+                gsap.from(elem, {
+                    y: 50,
+                    opacity: 0,
+                    duration: 1,
+                    ease: "power3.out",
+                    scrollTrigger: {
+                        trigger: elem,
+                        start: "top 85%",
+                        toggleActions: "play none none reverse"
+                    }
+                });
+            });
+
+            // Parallax Floating Objects in Hero
+            const floaters = document.querySelectorAll('.floating-obj');
+            floaters.forEach(obj => {
+                const speed = obj.getAttribute('data-speed');
+                gsap.to(obj, {
+                    y: () => 200 * speed,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: ".hero",
+                        start: "top top",
+                        end: "bottom top",
+                        scrub: true
+                    }
+                });
+            });
+
+            // Horizontal Scrolling Section
+            const horizSection = document.querySelector('.horizontal-section');
+            const horizContainer = document.getElementById('horizontal-container');
+            
+            if (horizSection && horizContainer) {
+                // Calculate distance to move based on total width minus viewport width
+                const scrollWidth = horizContainer.scrollWidth - window.innerWidth;
+                
+                let tl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: horizSection,
+                        pin: true,
+                        start: "top top",
+                        end: () => `+=${scrollWidth}`,
+                        scrub: 1,
+                        invalidateOnRefresh: true
+                    }
+                });
+
+                tl.to(horizContainer, {
+                    x: () => -scrollWidth,
+                    ease: "none"
+                });
+
+                // Image Reveal Masks inside Horizontal
+                const revealImgs = document.querySelectorAll('.reveal-img');
+                revealImgs.forEach(img => {
+                    gsap.to(img, {
+                        clipPath: "polygon(0 0, 100% 0, 100% 100%, 0% 100%)",
+                        ease: "power2.out",
+                        scrollTrigger: {
+                            trigger: img,
+                            containerAnimation: tl, // Hook into the horizontal timeline
+                            start: "left 80%",
+                            toggleActions: "play none none reverse"
+                        }
+                    });
+                });
+            }
+
+            // Stats Section: Number Counters & BG Color
+            const statsSection = document.getElementById('stats-section');
+            if (statsSection) {
+                // BG Color Transition
+                ScrollTrigger.create({
+                    trigger: statsSection,
+                    start: "top 60%",
+                    end: "bottom 40%",
+                    onEnter: () => gsap.to("body", { backgroundColor: "#111424", duration: 1 }),
+                    onLeaveBack: () => gsap.to("body", { backgroundColor: "#050505", duration: 1 }),
+                });
+
+                // Counters
+                const counters = document.querySelectorAll('.counter');
+                counters.forEach(counter => {
+                    const target = parseInt(counter.getAttribute('data-target'));
+                    ScrollTrigger.create({
+                        trigger: statsSection,
+                        start: "top 75%",
+                        once: true,
+                        onEnter: () => {
+                            gsap.to(counter, {
+                                innerHTML: target,
+                                duration: 2,
+                                ease: "power3.out",
+                                snap: { innerHTML: 1 },
+                                onUpdate: function() {
+                                    counter.innerHTML = Math.round(counter.innerHTML) + (target === 99 || target === 100 ? "%" : "+");
+                                }
+                            });
+                        }
+                    });
+                });
+
+                // SVG Line Drawing (simulated with div height)
+                gsap.to("#draw-line", {
+                    height: "100%",
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: ".svg-container",
+                        start: "top 80%",
+                        end: "bottom 20%",
+                        scrub: true
+                    }
+                });
+            }
+        }
+
+        // --- FOOTER PARTICLES ---
+        function initParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 30;
+
+            for(let i=0; i<particleCount; i++) {
+                const p = document.createElement('div');
+                p.style.position = 'absolute';
+                p.style.width = Math.random() * 4 + 'px';
+                p.style.height = p.style.width;
+                p.style.background = 'rgba(255,255,255,0.5)';
+                p.style.borderRadius = '50%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.left = Math.random() * 100 + '%';
+                container.appendChild(p);
+
+                // Animate
+                gsap.to(p, {
+                    y: `-=${Math.random() * 100 + 50}`,
+                    x: `+=${Math.random() * 50 - 25}`,
+                    opacity: 0,
+                    duration: Math.random() * 3 + 2,
+                    repeat: -1,
+                    ease: "none",
+                    delay: Math.random() * 2
+                });
+            }
+        }
+
+        // --- LOADER & HERO SEQUENCE ---
+        function playLoaderAndHero() {
+            const tl = gsap.timeline();
+
+            // Setup SplitText for Hero (using SplitType free library)
+            const heroTitle = new SplitType('#hero-title', { types: 'chars, words' });
+            gsap.set(heroTitle.chars, { y: 100, opacity: 0 });
+            gsap.set('.hero-desc', { opacity: 0, y: 20 });
+            gsap.set('.hero-cta', { opacity: 0, scale: 0.9 });
+            gsap.set('.nav-element', { y: -100, opacity: 0 });
+
+            // Loader animation
+            tl.to("#loader-bar", {
+                width: "100%",
+                duration: 1.5,
+                ease: "expo.inOut"
+            })
+            .to("#loader", {
+                yPercent: -100,
+                duration: 1,
+                ease: "expo.inOut"
+            }, "+=0.2")
+            // Reveal Nav
+            .to('.nav-element', {
+                y: 0,
+                opacity: 1,
+                duration: 1,
+                ease: "power4.out"
+            }, "-=0.5")
+            // Animate Hero Text
+            .to(heroTitle.chars, {
+                y: 0,
+                opacity: 1,
+                stagger: 0.02,
+                duration: 1.2,
+                ease: "back.out(1.5)"
+            }, "-=0.5")
+            // Reveal Description & CTA
+            .to(['.hero-desc', '.hero-cta'], {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                stagger: 0.2,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=0.8");
+        }
+
+        // --- INIT ALL ---
+        window.addEventListener('load', () => {
+            window.scrollTo(0, 0); // Reset scroll on refresh
+            
+            initCursor();
+            initMagnetic();
+            initCards();
+            initScrollAnimations();
+            initParticles();
+            
+            // Start sequence
+            playLoaderAndHero();
+            
+            // Recalculate ScrollTrigger on resize
+            window.addEventListener('resize', () => {
+                ScrollTrigger.refresh();
+            });
+        });
+    </script>
+</body>
+</html>
